@@ -10,7 +10,6 @@ import kr.apo2073.avatar.utils.AvatarManager.setInvs
 import org.bukkit.entity.Pose
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
-import org.bukkit.event.entity.EntityInteractEvent
 import org.bukkit.event.player.PlayerJoinEvent
 import org.bukkit.event.player.PlayerQuitEvent
 

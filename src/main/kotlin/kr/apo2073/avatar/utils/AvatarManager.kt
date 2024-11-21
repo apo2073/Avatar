@@ -16,9 +16,10 @@ object AvatarManager {
     private val fakeServer=Avatar.fakeServer
     val invs= mutableMapOf<UUID, Inventory>()
     fun setInvs(player: Player) {
+        val config=ConfigManager(player)
         invs[player.uniqueId]=Bukkit.createInventory(null, 9*5,
-            Component.text("${player.name}의 인벤토리")).apply {
-            Array(45) {if (it<45) player.inventory.contents[it] else ItemStack(Material.AIR)}
+            Component.text("${player.name}님의 인벤토리")).apply {
+            //Array(45) {if (it<45) player.inventory.contents[it] else ItemStack(Material.AIR)}
         }
     }
 }
