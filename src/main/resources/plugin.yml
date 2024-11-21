@@ -1,0 +1,5 @@
+name: Avatar
+version: '1.0'
+main: kr.apo2073.avatar.Avatar
+api-version: '1.21'
+authors: [ 아포칼립스 ]
