@@ -1,13 +1,10 @@
 package kr.apo2073.avatar.events
 
 import com.destroystokyo.paper.event.player.PlayerUseUnknownEntityEvent
-import io.github.monun.tap.fake.FakeSkinParts
-import io.github.monun.tap.mojangapi.MojangAPI
 import kr.apo2073.avatar.Avatar
 import kr.apo2073.avatar.utils.AvatarManager.fakePlayers
 import kr.apo2073.avatar.utils.AvatarManager.invs
-import kr.apo2073.avatar.utils.AvatarManager.setInvs
-import org.bukkit.entity.Pose
+import kr.apo2073.avatar.utils.AvatarManager.spawnAvatar
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
 import org.bukkit.event.player.PlayerJoinEvent
@@ -19,29 +16,18 @@ class onPlayerEvents: Listener {
     
     @EventHandler
     fun onQuitPlayerEvent(e: PlayerQuitEvent) {
-        Avatar.fakeServer.removePlayer(e.player)
-        val player=e.player
-        val uuid = MojangAPI.fetchProfile(player.name)!!.uuid()
-        val profiles = MojangAPI.fetchSkinProfile(uuid)!!
-            .profileProperties().toSet()
-        val fakePlayer=fakeServer.spawnPlayer(
-            player.location,
-            player.name,
-            profiles,
-            FakeSkinParts(0b1111111)
-        )
-        fakePlayer.updateMetadata {
-            pose=Pose.SLEEPING
-            setGravity(false)
-        }
-        setInvs(player)
+        try {
+            Avatar.fakeServer.removePlayer(e.player)
+            val player=e.player
+            val fakePlayer=spawnAvatar(player)
+        } catch (e: Exception) {e.printStackTrace()}
     }
 
     @EventHandler
     fun PlayerUseUnknownEntityEvent.onUseUnknownEntity() {
         try {
             fakePlayers.find { it.bukkitEntity.entityId == entityId }?.let {
-                player.openInventory(invs[it.bukkitEntity.uniqueId]!!)
+                player.openInventory(invs[it.bukkitEntity.uniqueId] ?: return)
             }
         } catch (e: Exception) {
             e.printStackTrace()

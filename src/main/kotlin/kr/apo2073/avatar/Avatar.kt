@@ -2,11 +2,10 @@ package kr.apo2073.avatar
 
 import io.github.monun.tap.fake.FakeEntityServer
 import kr.apo2073.avatar.events.onPlayerEvents
-import org.bukkit.event.EventHandler
-import org.bukkit.event.Listener
-import org.bukkit.event.player.PlayerJoinEvent
-import org.bukkit.event.player.PlayerQuitEvent
+import kr.apo2073.avatar.utils.AvatarManager.spawnAvatar
+import org.bukkit.entity.Player
 import org.bukkit.plugin.java.JavaPlugin
+import kotlin.contracts.Returns
 
 class Avatar : JavaPlugin() {
     companion object {
@@ -21,5 +20,11 @@ class Avatar : JavaPlugin() {
         server.scheduler.runTaskTimer(this, fakeServer::update, 0L, 1L)
         
         server.pluginManager.registerEvents(onPlayerEvents(), this)
+        
+        getCommand("av")?.setExecutor { sender, _, _, args -> 
+            if (sender !is Player) false
+            val fakePlayer=spawnAvatar(sender as Player)
+            true
+        }
     }
 }
