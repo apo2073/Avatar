@@ -2,6 +2,7 @@ package kr.apo2073.avatar.events
 
 import com.destroystokyo.paper.event.player.PlayerUseUnknownEntityEvent
 import kr.apo2073.avatar.Avatar
+import kr.apo2073.avatar.utils.AvatarManager.ENABLE_VIEW_ARMOR
 import kr.apo2073.avatar.utils.AvatarManager.fakePlayers
 import kr.apo2073.avatar.utils.AvatarManager.invs
 import kr.apo2073.avatar.utils.AvatarManager.spawnAvatar
@@ -10,6 +11,7 @@ import org.bukkit.Bukkit
 import org.bukkit.Material
 import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
+import org.bukkit.event.EventPriority
 import org.bukkit.event.Listener
 import org.bukkit.event.inventory.InventoryClickEvent
 import org.bukkit.event.player.PlayerJoinEvent
@@ -23,6 +25,7 @@ class onPlayerEvents: Listener {
         try {
             val player = e.player
             val fakePlayer = spawnAvatar(player)
+            fakePlayer.rotate(player.yaw, player.pitch)
         } catch (e: Exception) {
             e.printStackTrace()
         }
@@ -42,7 +45,7 @@ class onPlayerEvents: Listener {
         }
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.HIGHEST)
     fun onPlayerJoin(e: PlayerJoinEvent) {
         Avatar.fakeServer.addPlayer(e.player)
         val player = e.player
@@ -91,12 +94,25 @@ class onPlayerEvents: Listener {
         val uuid = UUID.fromString(e.inventory.getItem(0)!!.lore!!.first())
         val config=ConfigManager(Bukkit.getPlayer(uuid) ?: return)
         config.apply {
-            IntRange(0, e.inventory.size)
-                .forEach { setValue("inv.$it", e.inventory.contents[it] ?: ItemStack(Material.AIR)) }
+            IntRange(
+                0, e.inventory.size
+            ).forEach { setValue("inv.$it", e.inventory.contents[it] 
+                ?: ItemStack(Material.AIR)) }
         }
         
         synchronized(invs) {
             invs[uuid]=e.inventory
+        }
+        
+        if (!ENABLE_VIEW_ARMOR) return
+        fakePlayers.find { it.bukkitEntity.uniqueId==uuid }?.apply {
+            this.bukkitEntity.inventory.apply {
+                helmet = invs[uuid]?.getItem(3) ?: ItemStack(Material.AIR)
+                chestplate = invs[uuid]?.getItem(4) ?: ItemStack(Material.AIR)
+                leggings = invs[uuid]?.getItem(5) ?: ItemStack(Material.AIR)
+                boots = invs[uuid]?.getItem(6) ?: ItemStack(Material.AIR)
+                setItemInOffHand(invs[uuid]?.getItem(8) ?: ItemStack(Material.AIR))
+            }
         }
     } 
 }

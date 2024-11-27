@@ -13,6 +13,7 @@ class Avatar : JavaPlugin() {
     
     override fun onEnable() {
         instance=this
+        saveDefaultConfig()
         
         fakeServer=FakeEntityServer.create(this)
         server.scheduler.runTaskTimer(this, fakeServer::update, 0L, 1L)

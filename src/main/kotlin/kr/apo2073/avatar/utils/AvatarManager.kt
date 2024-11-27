@@ -19,9 +19,15 @@ import org.bukkit.inventory.ItemStack
 import java.util.*
 
 object AvatarManager {
+    private val plugin=Avatar.instance
     val fakePlayers get() = fakeServer.entities.filter { it.bukkitEntity is Player } as List<FakeEntity<Player>>
     private val fakeServer=Avatar.fakeServer
+    val ENABLE_VIEW_ARMOR= plugin.config.getBoolean("enable-view-armor")
     val invs= mutableMapOf<UUID, Inventory>()
+
+    init {
+        plugin.reloadConfig()
+    }
     
     private fun fakePlayerGenerator(player: Player): FakeEntity<Player> {
         val uuid = MojangAPI.fetchProfile(player.name)!!.uuid()
@@ -31,16 +37,26 @@ object AvatarManager {
             player.location,
             player.name,
             profiles,
-            FakeSkinParts(0b1111111)
+            FakeSkinParts(plugin.config.getInt("skin-parts", 0b1111111)) //0b1111111
         )
     }
-    
     fun spawnAvatar(player: Player): FakeEntity<Player> {
-        val fakePlayer= fakePlayerGenerator(player)
-        fakePlayer.updateMetadata {
-            pose= Pose.SLEEPING
+        val fakePlayer= fakePlayerGenerator(player).apply {
+            updateMetadata {
+                this.pose= Pose.SLEEPING
+                this.customName(txt(plugin.config
+                    .getString("avatar-name", "{name}").toString()
+                    .replace("{name}", player.name).replace("&", "§")))
+                if (ENABLE_VIEW_ARMOR) {
+                    this.inventory.helmet=player.inventory.helmet
+                    this.inventory.chestplate=player.inventory.chestplate
+                    this.inventory.leggings=player.inventory.leggings
+                    this.inventory.boots=player.inventory.boots
+                    this.inventory.setItemInOffHand(player.inventory.itemInOffHand)
+                }
+            }
         }
-        val config= ConfigManager(player)
+        val config = ConfigManager(player)
         invs[fakePlayer.bukkitEntity.uniqueId]= Bukkit.createInventory(
             null, 9*6, Component.text("\uEBBB\uBBBB")
         ).apply {
@@ -61,25 +77,23 @@ object AvatarManager {
                 player.inventory.boots to 6,
                 player.inventory.itemInOffHand to 8
             ).forEach { (item, slot) ->
-                item?.let { this.setItem(slot, it) }
-                    ?: setItem(slot, ItemStack(Material.AIR))
+                item?.let { this.setItem(slot, it) } ?: setItem(slot, ItemStack(Material.AIR))
             }
             for (index in player.inventory.contents.indices) {
                 val item = player.inventory.contents[index] ?: ItemStack(Material.AIR)
                 if (index in listOf(39, 38, 37, 36, 40)) continue
                 val targetSlot = 18 + index
-                if (targetSlot < 54) {
-                    this.setItem(targetSlot, item)
-                }
+                if (targetSlot>=54) continue
+                this.setItem(targetSlot, item)
             }
 
-            val noneSlot=mutableListOf<Int>().apply { 
+            val blank=mutableListOf<Int>().apply { 
                 add(1);add(2);add(7);
                 (9..17).forEach { add(it) }
             }
-            noneSlot.forEach {slot->
+            blank.forEach { slot->
                 setItem(slot, ItemBuilder(Material.BARRIER)
-                    .setDisplayName(" ").addItemFlag(ItemFlag.HIDE_ITEM_SPECIFICS).build())
+                    .setDisplayName("").addItemFlag(ItemFlag.HIDE_ITEM_SPECIFICS).build())
             }
         }
         config.apply { 

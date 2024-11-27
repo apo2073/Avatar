@@ -6,6 +6,8 @@ plugins {
 group = "kr.apo2073"
 version = "1"
 
+val relocate = (findProperty("relocate") as? String)?.toBoolean() ?: true
+
 repositories {
     mavenCentral()
     maven("https://repo.papermc.io/repository/maven-public/") {
@@ -32,9 +34,9 @@ kotlin {
 tasks.build {
     dependsOn("shadowJar")
 }
-tasks.jar {
+/*tasks.jar {
     destinationDirectory=file("C:\\Users\\이태수\\Desktop\\server\\plugins")
-}
+}*/
 
 tasks.processResources {
     val props = mapOf("version" to version)
@@ -42,5 +44,14 @@ tasks.processResources {
     filteringCharset = "UTF-8"
     filesMatching("plugin.yml") {
         expand(props)
+    }
+}
+
+tasks.shadowJar {
+    archiveFileName.set("Avatar.jar")
+    archiveBaseName.set("Avatar.jar")
+    archiveClassifier.set("")
+    dependencies {
+        include(dependency("com.github.apo2073:ApoLib:1.0.4"))
     }
 }
