@@ -34,9 +34,6 @@ kotlin {
 tasks.build {
     dependsOn("shadowJar")
 }
-/*tasks.jar {
-    destinationDirectory=file("C:\\Users\\이태수\\Desktop\\server\\plugins")
-}*/
 
 tasks.processResources {
     val props = mapOf("version" to version)
@@ -54,4 +51,5 @@ tasks.shadowJar {
     dependencies {
         include(dependency("com.github.apo2073:ApoLib:1.0.4"))
     }
+    //destinationDirectory=file("C:\\Users\\이태수\\Desktop\\server\\plugins")
 }

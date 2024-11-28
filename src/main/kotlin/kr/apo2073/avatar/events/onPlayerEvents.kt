@@ -7,6 +7,7 @@ import kr.apo2073.avatar.utils.AvatarManager.fakePlayers
 import kr.apo2073.avatar.utils.AvatarManager.invs
 import kr.apo2073.avatar.utils.AvatarManager.spawnAvatar
 import kr.apo2073.avatar.utils.ConfigManager
+import net.kyori.adventure.sound.Sound
 import org.bukkit.Bukkit
 import org.bukkit.Material
 import org.bukkit.entity.Player
@@ -14,6 +15,8 @@ import org.bukkit.event.EventHandler
 import org.bukkit.event.EventPriority
 import org.bukkit.event.Listener
 import org.bukkit.event.inventory.InventoryClickEvent
+import org.bukkit.event.inventory.InventoryCloseEvent
+import org.bukkit.event.inventory.InventoryType
 import org.bukkit.event.player.PlayerJoinEvent
 import org.bukkit.event.player.PlayerQuitEvent
 import org.bukkit.inventory.ItemStack
@@ -39,6 +42,8 @@ class onPlayerEvents: Listener {
             val fakeEntity = fakePlayers.find { it.bukkitEntity.entityId == entityId } ?: return
             fakeEntity.let {
                 player.openInventory(invs[it.bukkitEntity.uniqueId] ?: return)
+                player.playSound(Sound.sound(org.bukkit.Sound.BLOCK_CHEST_OPEN, Sound.Source.PLAYER, 1f, 1f))
+                
             }
         } catch (e: Exception) {
             e.printStackTrace()
@@ -80,39 +85,57 @@ class onPlayerEvents: Listener {
             e.printStackTrace()
         }
     }
-    
+
     @EventHandler
-    fun onClick(e:InventoryClickEvent) {
-        if (e.view.title != "\uEBBB\uBBBB") return
-        if (e.slot==0) e.isCancelled=true
-        val player=e.whoClicked as Player
-        val owner=Bukkit.getPlayer(e.inventory.getItem(0)!!.itemMeta.displayName.removeRange(0, 9)) ?: return
+    fun onClick(e: InventoryClickEvent) {
+        val inventory = e.inventory
+        val player = e.whoClicked as? Player ?: return
+
+        if (e.clickedInventory?.type == InventoryType.PLAYER) {
+            if (!e.isShiftClick) return
+            e.isCancelled = true
+        }
+        if (!e.view.title.contains("\uEBBB\uBBBB")) return
+        if (e.slot == 0) e.isCancelled = true
+        if (e.slot in 9..17 || e.slot in listOf(1, 2, 7)) e.isCancelled = true
+
+        val ownerItem = inventory.getItem(0) ?: return
+        val ownerName = ownerItem.itemMeta.displayName.removeRange(0, 9)
+        val owner = Bukkit.getPlayer(ownerName) ?: return
+
         if (owner.isOnline) {
-            e.isCancelled=true
+            e.isCancelled = true
             player.closeInventory()
+            return
         }
-        val uuid = UUID.fromString(e.inventory.getItem(0)!!.lore!!.first())
-        val config=ConfigManager(Bukkit.getPlayer(uuid) ?: return)
-        config.apply {
-            IntRange(
-                0, e.inventory.size
-            ).forEach { setValue("inv.$it", e.inventory.contents[it] 
-                ?: ItemStack(Material.AIR)) }
-        }
-        
+        val uuidString = ConfigManager(owner).getValue("fakePlayerUUID").toString()
+        val uuid = runCatching { UUID.fromString(uuidString) }.getOrNull() ?: return
+
         synchronized(invs) {
-            invs[uuid]=e.inventory
+            invs[uuid] = inventory
         }
-        
+
+        val config = ConfigManager(owner)
+        val inv=invs[uuid] ?: return
+        IntRange(0, inv.size-1).forEach {
+            config.setValue("inv.$it", inv.contents[it])
+        }
+
+        player.sendMessage(uuid.toString())
         if (!ENABLE_VIEW_ARMOR) return
-        fakePlayers.find { it.bukkitEntity.uniqueId==uuid }?.apply {
-            this.bukkitEntity.inventory.apply {
-                helmet = invs[uuid]?.getItem(3) ?: ItemStack(Material.AIR)
-                chestplate = invs[uuid]?.getItem(4) ?: ItemStack(Material.AIR)
-                leggings = invs[uuid]?.getItem(5) ?: ItemStack(Material.AIR)
-                boots = invs[uuid]?.getItem(6) ?: ItemStack(Material.AIR)
-                setItemInOffHand(invs[uuid]?.getItem(8) ?: ItemStack(Material.AIR))
-            }
+        fakePlayers.find { it.bukkitEntity.uniqueId == uuid }?.updateEquipment {
+            helmet=inventory.getItem(3) ?: ItemStack(Material.AIR)
+            chestplate=inventory.getItem(4) ?: ItemStack(Material.AIR)
+            leggings=inventory.getItem(5) ?: ItemStack(Material.AIR)
+            boots=inventory.getItem(6) ?: ItemStack(Material.AIR)
+            setItemInOffHand(inventory.getItem(8) ?: ItemStack(Material.AIR))
+            setItemInMainHand(inventory.getItem(18) ?: ItemStack(Material.AIR))
         }
-    } 
+    }
+
+    @EventHandler
+    fun onClose(event: InventoryCloseEvent) {
+        if (!event.view.title.contains("\uEBBB\uBBBB")) return
+        event.player.playSound(Sound.sound(org.bukkit.Sound.BLOCK_CHEST_CLOSE, Sound.Source.PLAYER, 1f, 1f))
+    }
 }
