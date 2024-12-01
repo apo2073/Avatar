@@ -87,6 +87,16 @@ object AvatarManager {
                 if (targetSlot>=54) continue
                 this.setItem(targetSlot, item)
             }
+            
+            if (!ENABLE_GUI_BARRIER) return@apply
+            val blank=mutableListOf<Int>().apply {
+                add(1);add(2);add(7);
+                (9..17).forEach { add(it) }
+            }
+            blank.forEach { slot->
+                setItem(slot, ItemBuilder(Material.BARRIER)
+                    .setDisplayName("").addItemFlag(ItemFlag.HIDE_ITEM_SPECIFICS).build())
+            }
         }
         config.apply { 
             setValue("fakePlayerUUID", fakePlayer.bukkitEntity.uniqueId.toString())

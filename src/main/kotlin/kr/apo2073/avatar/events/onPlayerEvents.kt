@@ -98,6 +98,10 @@ class onPlayerEvents: Listener {
         if (!e.view.title.contains("\uEBBB\uBBBB")) return
         if (e.slot == 0) e.isCancelled = true
         if (e.slot in 9..17 || e.slot in listOf(1, 2, 7)) e.isCancelled = true
+        if ((e.currentItem ?: return).type == Material.BARRIER) {
+            e.isCancelled = true
+            return
+        }
 
         val ownerItem = inventory.getItem(0) ?: return
         val ownerName = ownerItem.itemMeta.displayName.removeRange(0, 9)

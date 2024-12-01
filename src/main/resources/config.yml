@@ -1,3 +1,4 @@
 avatar-name: "&l플레이어 &a{name}"
 enable-view-armor: false
 skin-parts: 0b1111111
+enable-gui-barrier: true
