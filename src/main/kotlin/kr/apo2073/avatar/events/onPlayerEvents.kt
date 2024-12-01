@@ -42,7 +42,7 @@ class onPlayerEvents: Listener {
             val fakeEntity = fakePlayers.find { it.bukkitEntity.entityId == entityId } ?: return
             fakeEntity.let {
                 player.openInventory(invs[it.bukkitEntity.uniqueId] ?: return)
-                player.playSound(Sound.sound(org.bukkit.Sound.BLOCK_CHEST_OPEN, Sound.Source.PLAYER, 1f, 1f))
+                player.playSound(Sound.sound(org.bukkit.Sound.BLOCK_ENDER_CHEST_OPEN, Sound.Source.PLAYER, 1f, 1f))
                 
             }
         } catch (e: Exception) {
@@ -140,6 +140,6 @@ class onPlayerEvents: Listener {
     @EventHandler
     fun onClose(event: InventoryCloseEvent) {
         if (!event.view.title.contains("\uEBBB\uBBBB")) return
-        event.player.playSound(Sound.sound(org.bukkit.Sound.BLOCK_CHEST_CLOSE, Sound.Source.PLAYER, 1f, 1f))
+        event.player.playSound(Sound.sound(org.bukkit.Sound.BLOCK_ENDER_CHEST_CLOSE, Sound.Source.PLAYER, 1f, 1f))
     }
 }
